@@ -53,8 +53,14 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			if (words.length < 2) return;
+
 			for (int i = 0; i < words.length - 1; i++) {
-				BIGRAM.set(words[i], words[i + 1]);
+				String word1 = words[i];
+				String word2 = words[i+1];
+				BIGRAM.set(word1, word2);
+				context.write(BIGRAM, ONE);
+				BIGRAM.set(word1, "*");
 				context.write(BIGRAM, ONE);
 			}
 		}
@@ -82,13 +88,13 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			if (key.getRightElement().equals("*")) {
 				currentMarginal = sum;
 				currentWord = key.getLeftElement();
-				context.write(new PairOfStrings(currentWord, ""), 
+				context.write(new PairOfStrings(currentWord, ""),
 					      new FloatWritable(currentMarginal));
 			}
 			else if (currentWord != null && currentWord.equals(key.getLeftElement())) {
-				float relativeFreq = (float) Math.round((sum / currentMarginal) * 1e7) / 1e7f;
-				freq.set(relativeFreq);
-				context.write(key, freq);
+				float relativeFreq = sum / currentMarginal;
+				VALUE.set(relativeFreq);
+				context.write(key, VALUE);
 			}
 		}
 	}
