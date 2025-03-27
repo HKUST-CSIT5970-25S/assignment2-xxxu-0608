@@ -68,6 +68,7 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 
 		// Reuse objects.
 		private final static FloatWritable VALUE = new FloatWritable();
+		private final static IntWritable TOTAL_COUNT = new IntWritable();
 
 		@Override
 		public void reduce(PairOfStrings key, Iterable<IntWritable> values,
@@ -75,6 +76,12 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			int total = 0;
+			for (IntWritable val : values) {
+				total += val.get();
+			}
+			TOTAL_COUNT.set(total);
+			context.write(key, new FloatWritable(total));
 		}
 	}
 	
