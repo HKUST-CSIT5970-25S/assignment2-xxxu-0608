@@ -95,12 +95,12 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			int total = 0;
+			int sum = 0;
 			for (IntWritable val : values) {
-				total += val.get();
+				sum += val.get();
 			}
-			TOTAL_COUNT.set(total);
-			context.write(key, new FloatWritable(total));
+			SUM.set(sum);
+			context.write(key, SUM);
 		}
 	}
 
