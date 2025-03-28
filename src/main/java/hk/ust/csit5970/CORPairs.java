@@ -98,14 +98,14 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			Set<String> uniqueWords = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+			Set<String> uniqueWords = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
 			while (doc_tokenizer.hasMoreTokens()) {
 				String word = doc_tokenizer.nextToken();
 				if (!word.isEmpty()) {
 					uniqueWords.add(word);
 				}
 			}
-			List<String> words = new ArrayList<>(uniqueWords);
+			List<String> words = new ArrayList<String>(uniqueWords);
 			for (int i = 0; i < words.size(); i++) {
 				for (int j = i + 1; j < words.size(); j++) {
 					String word1 = words.get(i);
