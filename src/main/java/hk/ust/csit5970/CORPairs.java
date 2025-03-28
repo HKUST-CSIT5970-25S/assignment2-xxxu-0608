@@ -102,20 +102,18 @@ public class CORPairs extends Configured implements Tool {
 			while (doc_tokenizer.hasMoreTokens()) {
 				words.add(doc_tokenizer.nextToken());
 			}
-			Set<PairOfStrings> pairs = new HashSet<PairOfStrings>();
-			for (int i = 0; i < words.size(); i++) {
-				for (int j = i + 1; j < words.size(); j++) {
-					String word1 = words.get(i);
-					String word2 = words.get(j);
+			Set<String> uniqueWords = new HashSet<String>(words);
+			List<String> uniqueWordList = new ArrayList<String>(uniqueWords);
+			for (int i = 0; i < uniqueWordList.size(); i++) {
+				for (int j = i + 1; j < uniqueWordList.size(); j++) {
+					String word1 = uniqueWordList.get(i);
+					String word2 = uniqueWordList.get(j);
 					if (word1.compareToIgnoreCase(word2) < 0) {
-						pairs.add(new PairOfStrings(word1, word2));
-					} else if (word1.compareToIgnoreCase(word2) > 0) {
-						pairs.add(new PairOfStrings(word2, word1));
+						context.write(new PairOfStrings(word1, word2), one);
+					} else {
+						context.write(new PairOfStrings(word2, word1), one);
 					}
 				}
-			}
-			for (PairOfStrings pair : pairs) {
-				context.write(pair, one);
 			}
 		}
 	}
