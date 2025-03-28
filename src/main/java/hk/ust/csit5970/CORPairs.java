@@ -98,19 +98,20 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			List<String> words = new ArrayList<String>();
+			Set<String> uniqueWords = new HashSet<String>();
 			while (doc_tokenizer.hasMoreTokens()) {
-				String word = doc_tokenizer.nextToken();
+				String word = doc_tokenizer.nextToken().trim();
 				if (!word.isEmpty()) {
-					words.add(word);
+					uniqueWords.add(word);
 				}
 			}
+			List<String> words = new ArrayList<String>(uniqueWords);
 			Set<PairOfStrings> pairs = new HashSet<PairOfStrings>();
 			for (int i = 0; i < words.size(); i++) {
 				for (int j = i + 1; j < words.size(); j++) {
 					String word1 = words.get(i);
 					String word2 = words.get(j);
-					if (word1.compareToIgnoreCase(word2) < 0) {
+					if (word1.compareTo(word2) < 0) {
 						pairs.add(new PairOfStrings(word1, word2));
 					} else {
 						pairs.add(new PairOfStrings(word2, word1));
@@ -193,10 +194,10 @@ public class CORPairs extends Configured implements Tool {
 			for (IntWritable value : values) {
 				cooccurCount += value.get();
 			}
-			String word1 = key.getLeftElement();
-			String word2 = key.getRightElement();
-			Integer freq1 = word_total_map.get(word1.toLowerCase());
-			Integer freq2 = word_total_map.get(word2.toLowerCase());
+			String word1 = key.getLeftElement().toLowerCase();
+			String word2 = key.getRightElement().toLowerCase();
+			Integer freq1 = word_total_map.get(word1);
+			Integer freq2 = word_total_map.get(word2);
 			if (freq1 != null && freq2 != null && freq1 > 0 && freq2 > 0) {
 				double cor = (double) cooccurCount / (freq1 * freq2);
 				context.write(key, new DoubleWritable(cor));
