@@ -111,9 +111,9 @@ public class CORPairs extends Configured implements Tool {
 					String word1 = words.get(i);
 					String word2 = words.get(j);
 					if (word1.compareToIgnoreCase(word2) < 0) {
-						context.write(new PairOfStrings(word1, word2), ONE);
+						context.write(new PairOfStrings(word1, word2), one);
 					} else {
-						context.write(new PairOfStrings(word2, word1), ONE);
+						context.write(new PairOfStrings(word2, word1), one);
 					}
 				}
 			}
