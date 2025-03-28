@@ -85,15 +85,16 @@ public class CORStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			String[] words = sorted_word_set.toArray(new String[0]);
-			for (int i = 0; i < words.length; i++) {
-				HashMapStringIntWritable stripe = new HashMapStringIntWritable();
-				for (int j = 0; j < words.length; j++) {
-					if (i != j) {
-						stripe.increment(words[j]);
-					}
+			List<String> words = new ArrayList<>(sorted_word_set);
+			for (int i = 0; i < words.size(); i++) {
+				MapWritable stripe = new MapWritable();
+				for (int j = i + 1; j < words.size(); j++) {
+					String word = words.get(j).toLowerCase();
+					stripe.put(new Text(word), new IntWritable(1));
 				}
-				context.write(new Text(words[i]), new MapWritable(stripe));
+				if (!stripe.isEmpty()) {
+					context.write(new Text(words.get(i).toLowerCase()), stripe);
+				}
 			}
 		}
 	}
@@ -109,15 +110,20 @@ public class CORStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			HashMapStringIntWritable combinedStripe = new HashMapStringIntWritable();
-			for (MapWritable value : values) {
-				for (Map.Entry<Writable, Writable> entry : value.entrySet()) {
-					String neighbor = entry.getKey().toString();
-					int count = ((IntWritable) entry.getValue()).get();
-					combinedStripe.increment(neighbor, count);
+			MapWritable combinedStripe = new MapWritable();
+			for (MapWritable stripe : values) {
+				for (Map.Entry<Writable, Writable> entry : stripe.entrySet()) {
+					Text word = (Text) entry.getKey();
+					IntWritable count = (IntWritable) entry.getValue();
+					IntWritable currentCount = (IntWritable) combinedStripe.get(word);
+					if (currentCount == null) {
+						combinedStripe.put(word, new IntWritable(count.get()));
+					} else {
+						combinedStripe.put(word, new IntWritable(currentCount.get() + count.get()));
+					}
 				}
 			}
-			context.write(key, new MapWritable(combinedStripe));
+			context.write(key, combinedStripe);
 		}
 	}
 
@@ -171,21 +177,27 @@ public class CORStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			HashMapStringIntWritable finalStripe = new HashMapStringIntWritable();
-			for (MapWritable value : values) {
-				for (Map.Entry<Writable, Writable> entry : value.entrySet()) {
-					String neighbor = entry.getKey().toString();
-					int count = ((IntWritable) entry.getValue()).get();
-					finalStripe.increment(neighbor, count);
+			MapWritable finalStripe = new MapWritable();
+			for (MapWritable stripe : values) {
+				for (Map.Entry<Writable, Writable> entry : stripe.entrySet()) {
+					Text word = (Text) entry.getKey();
+					IntWritable count = (IntWritable) entry.getValue();
+					IntWritable currentCount = (IntWritable) finalStripe.get(word);
+					if (currentCount == null) {
+						finalStripe.put(word, new IntWritable(count.get()));
+					} else {
+						finalStripe.put(word, new IntWritable(currentCount.get() + count.get()));
+					}
 				}
 			}
-			String word1 = key.toString();
-			int freq1 = word_total_map.get(word1);
-			for (Map.Entry<String, Integer> entry : finalStripe.entrySet()) {
-				String word2 = entry.getKey();
-				if (word1.compareTo(word2) < 0) {
-					int pairFreq = entry.getValue();
-					int freq2 = word_total_map.get(word2);
+			String word1 = key.toString().toLowerCase();
+			Integer freq1 = word_total_map.get(word1);
+			if (freq1 == null) return;
+			for (Map.Entry<Writable, Writable> entry : finalStripe.entrySet()) {
+				String word2 = entry.getKey().toString().toLowerCase();
+				Integer freq2 = word_total_map.get(word2);
+				if (word1.compareTo(word2) < 0 && freq2 != null) {
+					int pairFreq = ((IntWritable) entry.getValue()).get();
 					double cor = (double) pairFreq / (freq1 * freq2);
 					context.write(new PairOfStrings(word1, word2), new DoubleWritable(cor));
 				}
