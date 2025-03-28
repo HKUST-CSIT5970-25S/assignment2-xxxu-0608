@@ -195,8 +195,8 @@ public class CORPairs extends Configured implements Tool {
 			}
 			String word1 = key.getLeftElement().toLowerCase();
 			String word2 = key.getRightElement().toLowerCase();
-			Integer freq1 = wordFreqMap.get(word1);
-			Integer freq2 = wordFreqMap.get(word2);
+			Integer freq1 = word_total_map.get(word1);
+			Integer freq2 = word_total_map.get(word2);
 			if (freq1 != null && freq2 != null && freq1 > 0 && freq2 > 0) {
 				double cor = (double) pairCount / (freq1 * freq2);
 				context.write(key, new DoubleWritable(cor));
