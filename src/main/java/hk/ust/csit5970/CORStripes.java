@@ -33,7 +33,6 @@ public class CORStripes extends Configured implements Tool {
 	 */
 	private static class CORMapper1 extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
-		private final static IntWritable one = new IntWritable(1);
 		@Override
 		public void map(LongWritable key, Text value, Context context)
 				throws IOException, InterruptedException {
@@ -46,7 +45,14 @@ public class CORStripes extends Configured implements Tool {
 			 */
 			while (doc_tokenizer.hasMoreTokens()) {
 				String word = doc_tokenizer.nextToken().toLowerCase();
-				context.write(new Text(word), one);
+				if (word_set.containsKey(word)) {
+					word_set.put(word, word_set.get(word) + 1);
+				} else {
+					word_set.put(word, 1);
+				}
+			}
+			for (Map.Entry<String, Integer> entry : word_set.entrySet()) {
+				context.write(new Text(entry.getKey()), new IntWritable(entry.getValue()));
 			}
 		}
 	}
@@ -89,11 +95,10 @@ public class CORStripes extends Configured implements Tool {
 			for (int i = 0; i < words.size(); i++) {
 				MapWritable stripe = new MapWritable();
 				for (int j = i + 1; j < words.size(); j++) {
-					String word = words.get(j).toLowerCase();
-					stripe.put(new Text(word), new IntWritable(1));
+					stripe.put(new Text(words.get(j)), new IntWritable(1));
 				}
 				if (!stripe.isEmpty()) {
-					context.write(new Text(words.get(i).toLowerCase()), stripe);
+					context.write(new Text(words.get(i)), stripe);
 				}
 			}
 		}
@@ -110,20 +115,18 @@ public class CORStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			MapWritable combinedStripe = new MapWritable();
+			MapWritable combined = new MapWritable();
 			for (MapWritable stripe : values) {
 				for (Map.Entry<Writable, Writable> entry : stripe.entrySet()) {
-					Text word = (Text) entry.getKey();
-					IntWritable count = (IntWritable) entry.getValue();
-					IntWritable currentCount = (IntWritable) combinedStripe.get(word);
-					if (currentCount == null) {
-						combinedStripe.put(word, new IntWritable(count.get()));
+					IntWritable current = (IntWritable) combined.get(entry.getKey());
+					if (current == null) {
+						combined.put(entry.getKey(), new IntWritable(((IntWritable)entry.getValue()).get()));
 					} else {
-						combinedStripe.put(word, new IntWritable(currentCount.get() + count.get()));
+						current.set(current.get() + ((IntWritable)entry.getValue()).get());
 					}
 				}
 			}
-			context.write(key, combinedStripe);
+			context.write(key, combined);
 		}
 	}
 
@@ -180,26 +183,24 @@ public class CORStripes extends Configured implements Tool {
 			MapWritable finalStripe = new MapWritable();
 			for (MapWritable stripe : values) {
 				for (Map.Entry<Writable, Writable> entry : stripe.entrySet()) {
-					Text word = (Text) entry.getKey();
-					IntWritable count = (IntWritable) entry.getValue();
-					IntWritable currentCount = (IntWritable) finalStripe.get(word);
-					if (currentCount == null) {
-						finalStripe.put(word, new IntWritable(count.get()));
+					IntWritable current = (IntWritable) finalStripe.get(entry.getKey());
+					if (current == null) {
+						finalStripe.put(entry.getKey(), new IntWritable(((IntWritable)entry.getValue()).get()));
 					} else {
-						finalStripe.put(word, new IntWritable(currentCount.get() + count.get()));
+						current.set(current.get() + ((IntWritable)entry.getValue()).get());
 					}
 				}
 			}
-			String word1 = key.toString().toLowerCase();
-			Integer freq1 = word_total_map.get(word1);
-			if (freq1 == null) return;
-			for (Map.Entry<Writable, Writable> entry : finalStripe.entrySet()) {
-				String word2 = entry.getKey().toString().toLowerCase();
-				Integer freq2 = word_total_map.get(word2);
-				if (word1.compareTo(word2) < 0 && freq2 != null) {
-					int pairFreq = ((IntWritable) entry.getValue()).get();
-					double cor = (double) pairFreq / (freq1 * freq2);
-					context.write(new PairOfStrings(word1, word2), new DoubleWritable(cor));
+			String word1 = key.toString();
+			Integer freq1 = word_total_map.get(word1.toLowerCase());
+			if (freq1 != null) {
+				for (Map.Entry<Writable, Writable> entry : finalStripe.entrySet()) {
+					String word2 = entry.getKey().toString();
+					Integer freq2 = word_total_map.get(word2.toLowerCase());
+					if (freq2 != null && word1.compareTo(word2) < 0) {
+						double cor = ((IntWritable) entry.getValue()).get() / (double)(freq1 * freq2);
+						context.write(new PairOfStrings(word1, word2), new DoubleWritable(cor));
+					}
 				}
 			}
 		}
