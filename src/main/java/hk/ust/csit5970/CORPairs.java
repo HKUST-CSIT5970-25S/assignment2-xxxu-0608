@@ -43,6 +43,7 @@ public class CORPairs extends Configured implements Tool {
 	 */
 	private static class CORMapper1 extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
+		private final static IntWritable one = new IntWritable(1);
 		@Override
 		public void map(LongWritable key, Text value, Context context)
 				throws IOException, InterruptedException {
@@ -54,8 +55,8 @@ public class CORPairs extends Configured implements Tool {
 			 * TODO: Your implementation goes here.
 			 */
 			while (doc_tokenizer.hasMoreTokens()) {
-				word.set(doc_tokenizer.nextToken().toLowerCase());
-				context.write(word, ONE);
+				String word = doc_tokenizer.nextToken().toLowerCase();
+				context.write(new Text(word), one);
 			}
 		}
 	}
@@ -72,11 +73,10 @@ public class CORPairs extends Configured implements Tool {
 			 * TODO: Your implementation goes here.
 			 */
 			int sum = 0;
-			for (IntWritable val : values) {
-				sum += val.get();
+			for (IntWritable value : values) {
+				sum += value.get();
 			}
-			result.set(sum);
-			context.write(key, result);
+			context.write(key, new IntWritable(sum));
 		}
 	}
 
@@ -85,7 +85,7 @@ public class CORPairs extends Configured implements Tool {
 	 * TODO: Write your second-pass Mapper here.
 	 */
 	public static class CORPairsMapper2 extends Mapper<LongWritable, Text, PairOfStrings, IntWritable> {
-		private final static IntWritable ONE = new IntWritable(1);
+		private final static IntWritable one = new IntWritable(1);
 		@Override
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			// Please use this tokenizer! DO NOT implement a tokenizer by yourself!
@@ -93,6 +93,22 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			String[] words = new String[doc_tokenizer.countTokens()];
+			int i = 0;
+			while (doc_tokenizer.hasMoreTokens()) {
+				words[i++] = doc_tokenizer.nextToken().toLowerCase();
+			}
+			for (int j = 0; j < words.length - 1; j++) {
+				for (int k = j + 1; k < words.length; k++) {
+					String word1 = words[j];
+					String word2 = words[k];
+					if (word1.compareTo(word2) < 0) {
+						context.write(new PairOfStrings(word1, word2), one);
+					} else {
+						context.write(new PairOfStrings(word2, word1), one);
+					}
+				}
+			}
 		}
 	}
 
@@ -105,6 +121,11 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			int sum = 0;
+			for (IntWritable value : values) {
+				sum += value.get();
+			}
+			context.write(key, new IntWritable(sum));
 		}
 	}
 
@@ -157,6 +178,16 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			int pairFreq = 0;
+			for (IntWritable value : values) {
+				pairFreq += value.get();
+			}
+			String word1 = key.getLeftElement();
+			String word2 = key.getRightElement();
+			int freq1 = word_total_map.get(word1);
+			int freq2 = word_total_map.get(word2);
+			double cor = (double) pairFreq / (freq1 * freq2);
+			context.write(key, new DoubleWritable(cor));
 		}
 	}
 
