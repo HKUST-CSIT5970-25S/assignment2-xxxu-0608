@@ -102,7 +102,7 @@ public class CORPairs extends Configured implements Tool {
 			while (doc_tokenizer.hasMoreTokens()) {
 				words.add(doc_tokenizer.nextToken());
 			}
-			Set<PairOfStrings> pairs = new HashSet<>();
+			Set<PairOfStrings> pairs = new HashSet<PairOfStrings>();
 			for (int i = 0; i < words.size(); i++) {
 				for (int j = i + 1; j < words.size(); j++) {
 					String word1 = words.get(i);
