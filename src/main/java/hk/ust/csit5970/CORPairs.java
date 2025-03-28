@@ -98,27 +98,24 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			List<String> words = new ArrayList<String>();
+			Set<String> uniqueWords = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 			while (doc_tokenizer.hasMoreTokens()) {
 				String word = doc_tokenizer.nextToken();
 				if (!word.isEmpty()) {
-					words.add(word);
+					uniqueWords.add(word);
 				}
 			}
-			Set<PairOfStrings> pairs = new HashSet<PairOfStrings>();
+			List<String> words = new ArrayList<>(uniqueWords);
 			for (int i = 0; i < words.size(); i++) {
 				for (int j = i + 1; j < words.size(); j++) {
 					String word1 = words.get(i);
 					String word2 = words.get(j);
-					if (word1.compareTo(word2) < 0) {
-						pairs.add(new PairOfStrings(word1, word2));
+					if (word1.compareToIgnoreCase(word2) < 0) {
+						context.write(new PairOfStrings(word1, word2), ONE);
 					} else {
-						pairs.add(new PairOfStrings(word2, word1));
+						context.write(new PairOfStrings(word2, word1), ONE);
 					}
 				}
-			}
-			for (PairOfStrings pair : pairs) {
-				context.write(pair, one);
 			}
 		}
 	}
@@ -189,16 +186,16 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			int pairCount = 0;
+			int cooccurCount = 0;
 			for (IntWritable value : values) {
-				pairCount += value.get();
+				cooccurCount += value.get();
 			}
 			String word1 = key.getLeftElement().toLowerCase();
 			String word2 = key.getRightElement().toLowerCase();
-			Integer freq1 = word_total_map.get(word1);
-			Integer freq2 = word_total_map.get(word2);
+			Integer freq1 = wordFrequencies.get(word1);
+			Integer freq2 = wordFrequencies.get(word2);
 			if (freq1 != null && freq2 != null && freq1 > 0 && freq2 > 0) {
-				double cor = (double) pairCount / (freq1 * freq2);
+				double cor = (double) cooccurCount / (freq1 * freq2);
 				context.write(key, new DoubleWritable(cor));
 			}
 		}
