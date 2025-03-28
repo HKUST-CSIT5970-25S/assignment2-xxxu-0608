@@ -54,7 +54,7 @@ public class CORPairs extends Configured implements Tool {
 			 * TODO: Your implementation goes here.
 			 */
 			while (doc_tokenizer.hasMoreTokens()) {
-				String word = doc_tokenizer.nextToken();
+				String word = doc_tokenizer.nextToken().toLowerCase();
 				if (word_set.containsKey(word)) {
 					word_set.put(word, word_set.get(word) + 1);
 				} else {
