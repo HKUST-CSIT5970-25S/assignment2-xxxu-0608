@@ -85,7 +85,7 @@ public class CORStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			List<String> words = new ArrayList<>(sorted_word_set);
+			List<String> words = new ArrayList<String>(sorted_word_set);
 			for (int i = 0; i < words.size(); i++) {
 				MapWritable stripe = new MapWritable();
 				for (int j = i + 1; j < words.size(); j++) {
