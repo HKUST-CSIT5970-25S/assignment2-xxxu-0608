@@ -98,21 +98,24 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			String[] words = new String[doc_tokenizer.countTokens()];
-			int i = 0;
+			List<String> words = new ArrayList<>();
 			while (doc_tokenizer.hasMoreTokens()) {
-				words[i++] = doc_tokenizer.nextToken().toLowerCase();
+				words.add(doc_tokenizer.nextToken());
 			}
-			for (int j = 0; j < words.length - 1; j++) {
-				for (int k = j + 1; k < words.length; k++) {
-					String word1 = words[j];
-					String word2 = words[k];
-					if (word1.compareTo(word2) < 0) {
-						context.write(new PairOfStrings(word1, word2), one);
-					} else {
-						context.write(new PairOfStrings(word2, word1), one);
+			Set<PairOfStrings> pairs = new HashSet<>();
+			for (int i = 0; i < words.size(); i++) {
+				for (int j = i + 1; j < words.size(); j++) {
+					String word1 = words.get(i);
+					String word2 = words.get(j);
+					if (word1.compareToIgnoreCase(word2) < 0) {
+						pairs.add(new PairOfStrings(word1, word2));
+					} else if (word1.compareToIgnoreCase(word2) > 0) {
+						pairs.add(new PairOfStrings(word2, word1));
 					}
 				}
+			}
+			for (PairOfStrings pair : pairs) {
+				context.write(pair, one);
 			}
 		}
 	}
@@ -183,16 +186,18 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			int pairFreq = 0;
+			int pairCount = 0;
 			for (IntWritable value : values) {
-				pairFreq += value.get();
+				pairCount += value.get();
 			}
-			String word1 = key.getLeftElement();
-			String word2 = key.getRightElement();
-			int freq1 = word_total_map.get(word1);
-			int freq2 = word_total_map.get(word2);
-			double cor = (double) pairFreq / (freq1 * freq2);
-			context.write(key, new DoubleWritable(cor));
+			String word1 = key.getLeftElement().toLowerCase();
+			String word2 = key.getRightElement().toLowerCase();
+			Integer freq1 = word_total_map.get(word1);
+			Integer freq2 = word_total_map.get(word2);
+			if (freq1 != null && freq2 != null && freq1 > 0 && freq2 > 0) {
+				double cor = (double) pairCount / (freq1 * freq2);
+				context.write(key, new DoubleWritable(cor));
+			}
 		}
 	}
 
