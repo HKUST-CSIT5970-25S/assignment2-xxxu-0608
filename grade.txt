@@ -1,0 +1,5 @@
+====BigramFrePairs==== Mark: 2/2
+====BigramFreStripes==== Mark: 2/2
+====CorPairs==== Mark: 0/3 [line 0: frequency 1.0 != 0.16666666666666666]
+====CorStrip==== Mark: 0/3 [line 0: frequency 1.0 != 0.16666666666666666]
+====Total Mark: 4/10
